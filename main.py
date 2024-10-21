@@ -1,6 +1,9 @@
 from fastapi import FastAPI
 import pickle
 import pandas as pd
+import requests
+from apscheduler.schedulers.background import BackgroundScheduler
+import os
 
 app = FastAPI()
 
@@ -49,6 +52,33 @@ async def predict(data: dict):
 
     }
 
+
+@app.get("/")
+def root():
+    return {"message": "Welcome to the FastAPI app. Use /predict to get predictions."}
+
+# Keep-alive function to ping the service
+# Get the public Render URL from environment variables or hardcode it
+SERVICE_URL = os.getenv("SERVICE_URL", "https://your-service-name.onrender.com/")
+def keep_alive():
+    try:
+        response = requests.get(SERVICE_URL)
+        if response.status_code == 200:
+            print("Keep-alive ping successful!")
+        else:
+            print(f"Ping failed with status code: {response.status_code}")
+    except Exception as e:
+        print(f"Error during keep-alive ping: {e}")
+
+# Initialize the scheduler to run every 30 seconds
+scheduler = BackgroundScheduler()
+scheduler.add_job(keep_alive, 'interval', seconds=30)
+scheduler.start()
+
+# Ensure scheduler shuts down properly
+@app.on_event("shutdown")
+def shutdown_event():
+    scheduler.shutdown()
 
 if __name__=="__main__":
     import uvicorn
