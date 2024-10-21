@@ -41,7 +41,7 @@ def get_predictions(customer_dict):
 @app.post("/predict")
 async def predict(data: dict):
     #Make prediction
-    prediction, porbabilities = get_predictions(data)
+    prediction, probabilities = get_predictions(data)
 
     return{
         "prediction": prediction.tolist(),
